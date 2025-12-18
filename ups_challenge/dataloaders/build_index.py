@@ -35,9 +35,9 @@ def build_lid_index(index_path: str = "./data/lid_index.pkl", hf_token: str = No
             raise ValueError(
                 f"Failed to download lid_results.jsonl: {response.status_code}"
             )
-        with open(lid_folder / "lid_results.jsonl", "wb") as f:
+        with open(lid_folder / "lang_id_results.jsonl", "wb") as f:
             f.write(response.content)
-        print(f"Downloaded lid_results.jsonl to {lid_folder / 'lid_results.jsonl'}")
+        print(f"Downloaded  lang_id_results.jsonl to {lid_folder / 'lang_id_results.jsonl'}")
 
     index = {}
 

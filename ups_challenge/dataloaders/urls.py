@@ -2,7 +2,7 @@ import os
 import pickle
 
 import braceexpand
-import tqdm
+from tqdm import tqdm
 
 from .build_index import build_lid_index
 
