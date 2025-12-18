@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoFeatureExtractor, AutoModelForCTC
-from ups_challenge.dataloaders.base import build_wds_dataset, collate_fn
+from ..dataloaders.base import build_wds_dataset, collate_fn
 import torch
     
 if __name__ == "__main__":
