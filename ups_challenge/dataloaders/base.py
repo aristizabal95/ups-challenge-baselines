@@ -112,16 +112,17 @@ def collate_fn(batch: list):
     }
 
 
-def build_wds_dataset(langs: list = []):
+def build_wds_dataset(langs: list = [], index_path: str = "./data/lid_index.pkl"):
     """
     Build a WebDataset dataset for the given languages.
     If langs is empty, all languages are included.
     Args:
         langs (list): List of language codes to include. If empty, all languages are included.
+        index_path (str): Path to the language ID index folder.
     Returns:
         wds.WebDataset: The constructed WebDataset.
     """
-    urls = build_urls(langs)
+    urls = build_urls(langs, index_path=index_path)
     return (
         wds.WebDataset(
             urls,

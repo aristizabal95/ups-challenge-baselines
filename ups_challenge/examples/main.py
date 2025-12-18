@@ -6,7 +6,7 @@ import torch
 if __name__ == "__main__":
     batch_size = 1
     num_workers = 1
-    langs = ['en']
+    langs = []
     wds_dataset = build_wds_dataset(langs)
     
     data_loader = torch.utils.data.DataLoader(
