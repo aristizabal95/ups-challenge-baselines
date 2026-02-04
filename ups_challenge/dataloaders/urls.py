@@ -8,7 +8,9 @@ from .build_index import build_lid_index
 
 
 def build_urls(
-    langs: list[str] = [], index_path: str = "./data/lid_index.pkl"
+    langs: list[str] = [],
+    index_path: str = "./data/lid_index.pkl",
+    hf_token: str = None,
 ) -> list[str]:
     """
     Build a list of WebDataset URLs for the given languages.
@@ -20,12 +22,14 @@ def build_urls(
         list[str]: List of WebDataset URLs.
     """
 
-    token = os.getenv("HF_TOKEN")
-    if token is None:
+    if hf_token is None:
+        hf_token = os.getenv("HF_TOKEN")
+    if hf_token is None:
         raise ValueError("HF_TOKEN is not set")
+    token = f"Authorization:Bearer {hf_token}"
     if len(langs) > 0:
         if not os.path.exists(index_path):
-            build_lid_index(index_path, hf_token=token)
+            build_lid_index(index_path, hf_token=hf_token)
 
         with open(index_path, "rb") as f:
             lid_index = pickle.load(f)
@@ -45,14 +49,12 @@ def build_urls(
                 urls.append(
                     f"https://huggingface.co/datasets/MLCommons/unsupervised_peoples_speech/resolve/main/audio2/{tar_number}.tar?download=True"
                 )
-        token = f"Authorization:Bearer {token}"
         urls = [f"pipe:curl -s -L {url} -H {token}" for url in urls]
         return urls
 
     else:
         # Choose the number of tars to download
         url = "https://huggingface.co/datasets/MLCommons/unsupervised_peoples_speech/resolve/main/audio/{000001..000004}.tar?download=True"
-        token = f"Authorization:Bearer {token}"
         urls = list(braceexpand.braceexpand(url))
         urls = [f"pipe:curl -s -L {url} -H {token}" for url in urls]
         return urls
