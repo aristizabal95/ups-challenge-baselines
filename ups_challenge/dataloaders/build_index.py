@@ -23,7 +23,7 @@ def build_lid_index_splits(
     labels = [index[k] for k in keys]
 
     sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
-    (train_idx,), (test_idx,) = sss.split(keys, labels)
+    train_idx, test_idx = next(sss.split(keys, labels))
 
     lid_index_train = {keys[i]: index[keys[i]] for i in train_idx}
     lid_index_test = {keys[i]: index[keys[i]] for i in test_idx}
