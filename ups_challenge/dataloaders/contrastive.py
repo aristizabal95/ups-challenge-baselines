@@ -1,6 +1,8 @@
 import random
 import webdataset as wds
 from torchcodec.decoders import AudioDecoder
+
+from ups_challenge.utils import LimitedDataset
 from .urls import build_urls
 
 
@@ -58,7 +60,7 @@ def decode_contrastive(sample, target_sr=16000, chunk_sec=10.0, min_offset_frac=
 
 def collate_contrastive(batch):
     """Build batch dict with anchor, positive, and negative sets as lists of arrays.
-    
+
     Returns lists of numpy arrays (not stacked tensors). The FeatureExtractor
     will handle padding and attention masks during preprocessing.
     """
@@ -88,6 +90,7 @@ def build_contrastive_dataset(
     hf_token=None,
     target_sr=16000,
     chunk_sec=10.0,
+    max_samples=None,
 ):
     """Return a WebDataset yielding dicts with anchor/positive audio chunks (with masks)."""
     if langs is None:
@@ -97,12 +100,15 @@ def build_contrastive_dataset(
 
     dataset = (
         wds.WebDataset(
-            urls, 
+            urls,
             shardshuffle=True,
-            handler=wds.handlers.ignore_and_continue  # Handle network errors gracefully
+            handler=wds.handlers.ignore_and_continue,
         )
         .to_tuple("mp3", "__key__", "__url__", handler=wds.handlers.ignore_and_continue)
         .map(lambda s: decode_contrastive(s, target_sr=target_sr, chunk_sec=chunk_sec))
     )
+
+    if max_samples is not None:
+        dataset = LimitedDataset(dataset, max_samples)
 
     return dataset

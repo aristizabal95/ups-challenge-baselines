@@ -4,6 +4,7 @@ import torch
 import webdataset as wds
 from torchcodec.decoders import AudioDecoder
 
+from ups_challenge.utils import LimitedDataset
 from .urls import build_urls
 
 
@@ -98,7 +99,6 @@ def collate_fn(batch: list):
     - handle None samples
     - concatenate input_values and attention_masks across the batch dimension
     """
-    # Filter out any Nones that might slip through
     batch = [b for b in batch if b is not None]
     if len(batch) == 0:
         return None
@@ -112,18 +112,27 @@ def collate_fn(batch: list):
     }
 
 
-def build_wds_dataset(langs: list = [], index_path: str = "./data/lid_index.pkl", hf_token: str = None):
+def build_wds_dataset(
+    langs: list = [],
+    index_path: str = "./data/lid_index.pkl",
+    hf_token: str = None,
+    max_samples: int = None,
+):
     """
     Build a WebDataset dataset for the given languages.
     If langs is empty, all languages are included.
+
     Args:
-        langs (list): List of language codes to include. If empty, all languages are included.
-        index_path (str): Path to the language ID index folder.
+        langs: List of language codes to include. If empty, all languages are included.
+        index_path: Path to the language ID index folder.
+        hf_token: HuggingFace token for dataset access.
+        max_samples: Maximum number of valid samples to yield (None for no limit).
+
     Returns:
-        wds.WebDataset: The constructed WebDataset.
+        WebDataset (or LimitedDataset wrapping it) yielding decoded audio dicts.
     """
     urls = build_urls(langs, index_path=index_path, hf_token=hf_token)
-    return (
+    dataset = (
         wds.WebDataset(
             urls,
             shardshuffle=False,
@@ -131,3 +140,6 @@ def build_wds_dataset(langs: list = [], index_path: str = "./data/lid_index.pkl"
         .to_tuple("mp3", "__key__", "__url__", handler=wds.handlers.ignore_and_continue)
         .map(decode_and_normalize)
     )
+    if max_samples is not None:
+        dataset = LimitedDataset(dataset, max_samples)
+    return dataset
