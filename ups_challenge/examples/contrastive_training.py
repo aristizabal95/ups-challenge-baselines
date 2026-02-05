@@ -1,13 +1,15 @@
 import os
 import torch
+from dotenv import load_dotenv
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoModel, AutoFeatureExtractor, Wav2Vec2Model, Wav2Vec2Config
+from transformers import AutoFeatureExtractor, Wav2Vec2Model, Wav2Vec2Config
 from tqdm import tqdm
 
-from ups_challenge.dataloaders.contrastive import build_contrastive_dataset, collate_contrastive
-
-from dotenv import load_dotenv
+from ups_challenge.dataloaders.contrastive import (
+    build_contrastive_dataset,
+    collate_contrastive,
+)
 
 load_dotenv()
 
@@ -87,6 +89,7 @@ def train_contrastive(
     index_path="./data/lid_index_train.pkl",
     hf_token=None,
     max_steps=None,
+    max_samples=None,
 ):
     """
     Train wav2vec2 model with contrastive learning.
@@ -103,6 +106,7 @@ def train_contrastive(
         index_path: Path to language ID index
         hf_token: HuggingFace token
         max_steps: Maximum number of training steps (None for unlimited)
+        max_samples: Maximum number of samples per epoch (None for unlimited)
     """
     # Setup device
     if device is None:
@@ -126,10 +130,13 @@ def train_contrastive(
     
     # Build dataset and dataloader
     print("Building contrastive dataset...")
+    if max_samples is not None:
+        print(f"Limiting to {max_samples} samples per epoch")
     dataset = build_contrastive_dataset(
         langs=langs,
         index_path=index_path,
         hf_token=hf_token,
+        max_samples=max_samples,
     )
     
     data_loader = torch.utils.data.DataLoader(
@@ -207,12 +214,14 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.07, help="Temperature for contrastive loss")
     parser.add_argument("--langs", type=str, nargs="*", default=None,
                         help="Language codes to use (empty for all)")
-    parser.add_argument("--index_path", type=str, default="./data/lid_index.pkl",
+    parser.add_argument("--index_path", type=str, default="./data/lid_index_train.pkl",
                         help="Path to language ID index")
     parser.add_argument("--hf_token", type=str, default=None,
                         help="HuggingFace token (or set HF_TOKEN env var)")
     parser.add_argument("--max_steps", type=int, default=None,
                         help="Maximum number of training steps")
+    parser.add_argument("--max_samples", type=int, default=None,
+                        help="Maximum number of samples per epoch")
     
     args = parser.parse_args()
     
@@ -230,4 +239,5 @@ if __name__ == "__main__":
         index_path=args.index_path,
         hf_token=hf_token,
         max_steps=args.max_steps,
+        max_samples=args.max_samples,
     )
